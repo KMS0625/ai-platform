@@ -1,0 +1,68 @@
+.container {
+    position: absolute;
+
+    left: 20%;
+    right: 20%;
+    bottom: 3%;
+
+    padding: 0.35rem 0.6rem;
+    box-sizing: border-box;
+
+    z-index: 10;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    
+}
+
+.textArea {
+    display: flex;
+    align-items: flex-end;
+
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.inputWrapper {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+}
+
+.buttonRow {
+    display: flex;
+    justify-content: flex-end;   /* 버튼 오른쪽 정렬 */
+}
+
+.submitButton {
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+
+    font-size: 1rem;
+    line-height: 1;
+
+    /* 비활성: 반투명 + 글자 안 보임 */
+    background: #2563eb;
+    color: transparent;
+    opacity: 0.35;
+    cursor: not-allowed;
+
+    transition: opacity 0.15s, color 0.15s;
+}
+
+/* 활성: 불투명 + 흰 글씨 */
+.submitButton.active {
+    opacity: 1;
+    color: #ffffff;
+    cursor: pointer;
+}

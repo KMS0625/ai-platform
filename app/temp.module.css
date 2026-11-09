@@ -1,0 +1,10 @@
+.container {
+  width: 100%;
+  height: 100vh;
+  background: #591f1f;
+  color: #932d2d;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

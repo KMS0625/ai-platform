@@ -1,0 +1,1 @@
+export type AnswerStatus = | "pending" | "streaming" | "completed" | "error"

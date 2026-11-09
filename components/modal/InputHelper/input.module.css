@@ -1,0 +1,156 @@
+.container {
+  width: min(420px, 90vw);
+  box-sizing: border-box;
+  padding: 1.5rem;
+
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #111;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 1rem;
+  padding: 0.65rem 0.8rem;
+
+  border: 1px solid #d9dce2;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+
+  font-size: 0.925rem;
+  line-height: 1.4;
+  font-family: inherit;
+
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: #aaa;
+}
+
+.input:hover {
+  border-color: #bfc3cc;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4c8dff;
+  box-shadow: 0 0 0 3px rgba(76, 141, 255, 0.18);
+}
+
+.input:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.closeButton {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: -4px -6px 0 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #888;
+
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.closeButton:hover {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.description {
+  margin: 0;
+  font-size: 0.925rem;
+  line-height: 1.6;
+  color: #555;
+  word-break: keep-all; /* 한글 단어 단위 줄바꿈 */
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.75rem;
+}
+
+.button {
+  min-width: 72px;
+  padding: 0.6rem 1.1rem;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+.button:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid #4c8dff;
+  outline-offset: 2px;
+}
+
+.cancelButton {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.cancelButton:hover {
+  background: #e4e4e4;
+}
+
+.deleteButton {
+  background: #e5484d;
+  color: #fff;
+}
+
+.deleteButton:hover {
+  background: #d13a3f;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

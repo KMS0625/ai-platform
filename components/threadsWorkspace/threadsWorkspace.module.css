@@ -1,0 +1,103 @@
+.container {
+  flex: 1;
+
+  width: 100%;
+  height: 100%;
+
+  background-color: inherit;
+}
+
+.workspace {
+  width: 100%;
+  height: 100%;
+
+  padding-bottom: 9rem;
+
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start; /* 왼쪽 정렬 */
+
+  width: 100%;
+  height: 3rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem;
+}
+
+.headerButton {
+  color: #fff;
+  height: 2.5rem;
+  width: 5rem;
+}
+
+.getModel {
+  background: #111;
+  border: none;
+  border-radius: 3px;
+
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.set {
+  flex-shrink: 0;            /* 버튼이 찌그러지지 않게 */
+  width: 8rem;
+  height: 2.5rem;
+  padding: 0;
+
+  border: none;
+  border-radius: 3px;
+  color: #1935a2;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.threadViewport {
+  width: 100%;
+  height: 100%;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.threadList {
+  display: flex;
+  gap: 0.5rem;
+
+  width: max-content;
+  min-width: 100%;      
+  height: 100%;
+}
+
+.threadItem {
+  flex: 0 0 38rem;       
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 적을 때 중앙, 넘치면 auto margin이 0이 되어 왼쪽부터 스크롤 */
+.threadItem:first-child { margin-left: auto; }
+.threadItem:last-child  { margin-right: auto; }
+
+/* 새로 생긴 카드 등장 효과 */
+.enter {
+  animation: enter 0.3s ease-out;
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateX(2rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}

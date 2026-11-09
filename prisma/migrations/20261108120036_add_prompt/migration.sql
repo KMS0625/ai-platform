@@ -1,0 +1,17 @@
+-- CreateTable
+CREATE TABLE "Prompt" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL DEFAULT '',
+    "description" TEXT NOT NULL DEFAULT '',
+    "content" TEXT NOT NULL DEFAULT '',
+    "temperature" DOUBLE PRECISION NOT NULL DEFAULT 0.7,
+    "topP" DOUBLE PRECISION NOT NULL DEFAULT 1,
+    "maxInputTokens" INTEGER NOT NULL DEFAULT 0,
+    "maxOutputTokens" INTEGER NOT NULL DEFAULT 2048,
+    "frequencyPenalty" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "presencePenalty" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Prompt_pkey" PRIMARY KEY ("id")
+);

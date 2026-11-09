@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+enum AnswerStatus {
+  COMPLETED
+  FAILED
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ChatWorkspace {
+  id    String @id @default(uuid())
+  title String
+  order Int    @default(0)
+
+  noteId String?
+  note   Note?   @relation(fields: [noteId], references: [id], onDelete: SetNull)
+
+  promptId String?
+  prompt   Prompt? @relation(fields: [promptId], references: [id], onDelete: SetNull)
+
+  threads   Thread[]
+  questions Question[]
+
+  createdAt DateTime @default(now())
+}
+
+model Thread {
+  id          String @id @default(uuid())
+  workspaceId String
+
+  workspace ChatWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  answers Answer[]
+
+  title     String
+  model     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId, order])
+}
+
+model Question {
+  id          String @id @default(uuid())
+  workspaceId String
+
+  workspace ChatWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  answers   Answer[]
+
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Answer {
+  id         Int    @id @default(autoincrement())
+  questionId String
+  threadId   String
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  thread   Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  content   String?
+  status    AnswerStatus @default(COMPLETED)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([questionId, threadId])
+  @@index([threadId, createdAt])
+  @@index([questionId])
+}
+
+model Note {
+  id    String @id @default(uuid())
+  title String
+  order Int    @default(0)
+
+  pages Page[]
+
+  createdAt      DateTime        @default(now())
+  chatWorkspaces ChatWorkspace[]
+}
+
+model Page {
+  id     String @id @default(uuid())
+  noteId String
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  title      String
+  keywords   String[] @default([])
+  content    String   @default("")
+  priority   Int      @default(0)
+  importance Int      @default(0)
+  enabled    Boolean  @default(true)
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([noteId])
+}
+
+model Prompt {
+  id          String @id @default(uuid())
+  title       String @default("")
+  description String @default("")
+  content     String @default("")
+
+  temperature      Float @default(0.7)
+  topP             Float @default(1)
+  maxInputTokens   Int   @default(0) // 0 = 제한 없음 (아직 UI 없음)
+  maxOutputTokens  Int   @default(2048)
+  frequencyPenalty Float @default(0)
+  presencePenalty  Float @default(0)
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  chatWorkspaces ChatWorkspace[]
+}
