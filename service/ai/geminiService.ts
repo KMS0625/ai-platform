@@ -1,24 +1,15 @@
 import { ai } from "@/lib/gemini/client";
 import { sanitizeConfig } from "@/lib/gemini/config";
 import { toContent, toSystemInstruction } from "@/lib/gemini/mapper";
-import { ThreadMessage } from "@/types/ThreadMessage";
-import { GenerateContentConfig } from "@google/genai";
-import type { ChatMessage } from "@/lib/context/buildContext";
+import type { GenerateTextDto, GenerateTextResponseDto } from "@/zrc/lib/schemas/ai";
 
 export class InvalidChatInputError extends Error {}
-
-interface askGeminiParms {
-    message: ChatMessage[];
-    system?: string[];
-    model: string;
-    config?: GenerateContentConfig;
-}
 
 export async function  askGemini({
     message,
     model,
     config = {},
-}: askGeminiParms): Promise<string> {
+}: GenerateTextDto): Promise<GenerateTextResponseDto> {
     message.reverse(); // 메시지는 최신 -> 나중 순으로 되고 있다. 그러므로 gemini에 맞게 역순
 
     console.log("========================================")
@@ -56,9 +47,9 @@ export async function  askGemini({
         }
 
         const response = await ai.models.generateContent(request);
-        return response.text ?? "";
+        return { content: response.text ?? "" };
     } catch (e) {
-        return Promise.resolve(`${model} request failed ${e}`);
+        return { content: `${model} request failed ${e}` };
     }
     
 

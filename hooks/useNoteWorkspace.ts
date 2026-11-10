@@ -140,6 +140,11 @@ export function useNoteWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
             
         }
 
-    return { createNote, pages, deleteWorkspace, updatePage, createPage, deletePage, isWorkspaceLoading }
+    const renameWorkspace = async (id: string, title: string) => {
+        const updated = await noteApi.rename(id, { title });
+        workspaceList.renameWorkspace(id, updated.title);
+    };
+
+    return { createNote, pages, deleteWorkspace, renameWorkspace, updatePage, createPage, deletePage, isWorkspaceLoading }
 }
 

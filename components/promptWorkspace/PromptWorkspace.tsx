@@ -107,7 +107,7 @@ export default function PromptWorkspace({ initial, onChange }: Props) {
             <section className={styles.main}>
                 <input
                     className={styles.title}
-                    value={draft.title}
+                    value={initial?.title ?? draft.title}
                     onChange={(e) => update({ title: e.target.value })}
                     placeholder="프롬프트 이름"
                     aria-label="프롬프트 이름"

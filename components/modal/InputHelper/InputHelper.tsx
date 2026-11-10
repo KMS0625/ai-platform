@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styles from "./input.module.css";
 
 type InputHelperProps = {
@@ -7,7 +7,8 @@ type InputHelperProps = {
     placeholder?: string;
     defaultValue?: string;
     onClose: () => void;
-    onSubmit: (value: string) => void;
+    onSubmit: (value: string) => void | Promise<void>;
+    submitLabel?: string;
 };
 
 function InputHelper({
@@ -17,18 +18,32 @@ function InputHelper({
     defaultValue = "",
     onClose,
     onSubmit,
+    submitLabel = "입력",
 }: InputHelperProps) {
     const [input, setInput] = useState(defaultValue);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
+    const submittingRef = useRef(false);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const value = input.trim();
-        if (!value) return;
-
-        onSubmit(value);
+        if (!value || submittingRef.current) return;
+        submittingRef.current = true;
+        setIsSubmitting(true);
+        setError("");
+        try {
+            await onSubmit(value);
+            onClose();
+        } catch {
+            setError("저장하지 못했습니다. 다시 시도해 주세요.");
+        } finally {
+            submittingRef.current = false;
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className={styles.container}>
+        <form className={styles.container} onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
             <div className={styles.header}>
                 <h2 className={styles.title}>{title}</h2>
                 <button
@@ -36,6 +51,7 @@ function InputHelper({
                     className={styles.closeButton}
                     onClick={onClose}
                     aria-label="닫기"
+                    disabled={isSubmitting}
                 >
                     ×
                 </button>
@@ -44,31 +60,35 @@ function InputHelper({
             <p className={styles.description}>{description}</p>
 
             <input
+                aria-label="새로운 제목"
+                autoFocus
                 className={styles.input}
                 value={input}
                 placeholder={placeholder}
                 onChange={(e) => setInput(e.target.value)}
+                disabled={isSubmitting}
             />
+            {error && <p className={styles.error} role="alert">{error}</p>}
 
             <div className={styles.actions}>
                 <button
                     type="button"
                     className={`${styles.button} ${styles.cancelButton}`}
                     onClick={onClose}
+                    disabled={isSubmitting}
                 >
                     취소
                 </button>
 
                 <button
-                    type="button"
-                    className={`${styles.button} ${styles.deleteButton}`}
-                    onClick={handleSubmit}
-                    disabled={!input.trim()}
+                    type="submit"
+                    className={`${styles.button} ${styles.submitButton}`}
+                    disabled={!input.trim() || isSubmitting}
                 >
-                    입력
+                    {isSubmitting ? "저장 중…" : submitLabel}
                 </button>
             </div>
-        </div>
+        </form>
     );
 }
 

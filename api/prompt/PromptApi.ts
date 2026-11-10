@@ -1,64 +1,25 @@
-import type { Prompt, PromptUpdateData } from "@/models/Prompt";
+import { API } from "@/lib/api/route";
+import { request } from "@/lib/api/client";
+import type { CreatePromptDto, PromptResponseDto, PromptListResponseDto, UpdatePromptDto } from "@/zrc/lib/schemas/prompt";
+import type { UpdateTitleDto } from "@/zrc/lib/schemas/title";
 
 export const promptApi = {
-    async getAllTitle(): Promise<Prompt[]> {
-        const response = await fetch("/api/workspaces/prompts");
-
-        if (!response.ok) {
-            throw new Error(`Failed to get prompts: ${response.status}`);
-        }
-
-        return response.json();
+    rename(promptId: string, data: UpdateTitleDto): Promise<PromptResponseDto> {
+        return request<PromptResponseDto>(API.prompt.detail(promptId), { method: "PATCH", json: data });
     },
-
-    async create(): Promise<Prompt> {
-        const response = await fetch("/api/workspaces/prompts", {
-            method: "POST",
-        });
-        console.log("djfksjf");
-        if (!response.ok) {
-            throw new Error(`Failed to create prompt: ${response.status}`);
-        }
-
-        return response.json();
+    getAllTitle(): Promise<PromptListResponseDto> {
+        return request<PromptListResponseDto>(API.prompt.list);
     },
-
-    async delete(promptId: string): Promise<void> {
-        const response = await fetch(`/api/workspaces/prompts/${promptId}`, {
-            method: "DELETE",
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to delete prompt: ${response.status}`);
-        }
+    create(data: CreatePromptDto = {}): Promise<PromptResponseDto> {
+        return request<PromptResponseDto>(API.prompt.list, { method: "POST", json: data });
     },
-
-    async get(promptId: string): Promise<Prompt> {
-        const response = await fetch(`/api/workspaces/prompts/${promptId}`, {
-            method: "GET",
-        });
-
-
-        if (!response.ok) {
-            throw new Error(`Failed to get prompt: ${response.status}`);
-        }
-
-        return response.json();
+    delete(promptId: string): Promise<void> {
+        return request<void>(API.prompt.detail(promptId), { method: "DELETE" });
     },
-
-    async update(promptId: string, changes: PromptUpdateData): Promise<Prompt> {
-        const response = await fetch(`/api/workspaces/prompts/${promptId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(changes),
-            keepalive: true, // 탭을 닫거나 새로고침해도 요청 유지 (본문 64KB 초과 시 거부됨)
-        });
-
-        console.log("실행되었다");
-        if (!response.ok) {
-            throw new Error(`Failed to update prompt: ${response.status}`);
-        }
-
-        return response.json();
+    get(promptId: string): Promise<PromptResponseDto> {
+        return request<PromptResponseDto>(API.prompt.detail(promptId));
+    },
+    update(promptId: string, changes: UpdatePromptDto): Promise<PromptResponseDto> {
+        return request<PromptResponseDto>(API.prompt.detail(promptId), { method: "PUT", json: changes, keepalive: true });
     },
 };

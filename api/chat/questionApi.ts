@@ -1,20 +1,12 @@
-import { toQuestion, toThread } from "@/api/mapper";
-import { Question, QuestionCreateData } from "@/models/Question";
+import { API } from "@/lib/api/route";
+import { request } from "@/lib/api/client";
+import { toQuestion } from "@/api/mapper";
+import type { Question } from "@/models/Question";
+import type { CreateQuestionDto, QuestionResponseDto } from "@/zrc/lib/schemas/question";
 
 export const questionApi = {
-    async create(chatId: string, question: QuestionCreateData): Promise<Question> {
-        const response = await fetch(`/api/workspaces/chats/${chatId}/questions`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question })
-        })
-
-        if (!response.ok) {
-            throw new Error("Faild to create question");
-        }
-
-        const data = await response.json();
-
+    async create(chatId: string, question: CreateQuestionDto): Promise<Question> {
+        const data = await request<QuestionResponseDto>(API.chat.questions(chatId), { method: "POST", json: { question } });
         return toQuestion(data);
     },
-}
+};

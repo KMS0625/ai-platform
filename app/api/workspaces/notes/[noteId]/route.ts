@@ -1,30 +1,16 @@
-import { Prisma } from "@/generated/prisma/client";
+import { handler, noContent } from "@/lib/server/http";
 import { noteService } from "@/service/noteSercive";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { UpdateTitleSchema } from "@/zrc/lib/schemas/title";
 
+export const PATCH = handler<{ noteId: string }>(async (request, { params }) => {
+    const { noteId } = await params;
+    const data = UpdateTitleSchema.parse(await request.json());
+    return NextResponse.json(await noteService.update(noteId, data));
+});
 
-export async function  DELETE(
-    request: NextRequest,
-    { params }: { params: Promise<{ noteId: string }>}
-) {
-    try {
-        const { noteId } = await params;
-        await noteService.delete(noteId);
-
-        return new NextResponse(null, { status: 204 });
-    } catch (error) {
-        
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === "P2025"
-        ) {
-            return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-        }
-
-        console.error("[DELETE chatWorkspace]", error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
-    }
-}
+export const DELETE = handler<{ noteId: string }>(async (_request, { params }) => {
+    const { noteId } = await params;
+    await noteService.delete(noteId);
+    return noContent();
+});

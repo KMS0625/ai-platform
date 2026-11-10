@@ -39,6 +39,7 @@ function ThreadsWorkspace({ threadsView }: ThreadsWorkspaceProps) {
     const prevRects = useRef(new Map<string, number>());
     const knownIds = useRef(new Set<string>());
     const [newIds, setNewIds] = useState<Set<string>>(new Set());
+    const isWaiting = chatWorkspace.isWating;
 
     const handleSubmit = async () => {
         const question = text.trim();
@@ -204,8 +205,9 @@ function ThreadsWorkspace({ threadsView }: ThreadsWorkspaceProps) {
             <ChatInput
                 value={text}
                 onChange={setText}
-                onSubmit={handleSubmit}
+                onSubmit={isWaiting ? () => chatWorkspace.handleStop : handleSubmit}
                 disabled={isLoading}
+                isWaiting={isWaiting}
             />
         </section>
     );

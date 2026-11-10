@@ -1,20 +1,20 @@
-import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { PageUpdateData } from "@/models/Page";
-import { ThreadCreateData } from "@/models/Thread";
-import { create } from "domain";
+import { CreatePageSchema, UpdatePageSchema } from "@/zrc/lib/schemas/page";
+import type { CreatePageDto, UpdatePageDto, PageResponseDto, PageListResponseDto, MatchedPageDto } from "@/zrc/lib/schemas/page";
+import { toPageDto } from "./dtoMappers";
 
 const ORDER_STEP = 10;
 const DEFALUT_TITLE = "new page";
 
 export const pageService = {
-    create(noteId: string) {
-        return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    async create(noteId: string, data: CreatePageDto = {}): Promise<PageResponseDto> {
+        const input = CreatePageSchema.parse(data);
+        const page = await prisma.$transaction(async (tx) => {
             const { _max } = await tx.page.aggregate({
                 _max: { order: true }
             })
 
-            const total = await prisma.page.count({
+            const total = await tx.page.count({
                 where: {
                     noteId,
                 }
@@ -22,36 +22,41 @@ export const pageService = {
 
             return tx.page.create({
                 data: {
-                    title: `${DEFALUT_TITLE} ${total}`,
+                    ...input,
+                    title: input.title ?? `${DEFALUT_TITLE} ${total}`,
                     noteId,
                     order: (_max.order ?? 0) + ORDER_STEP,
                 }
             })
         })
+        return toPageDto(page);
     },
-    delete(noteId: string, pageId: string) {
-        return prisma.page.delete({
+    async delete(noteId: string, pageId: string): Promise<PageResponseDto> {
+        const page = await prisma.page.delete({
             where: { 
                 id: pageId,
                 noteId,
             }
         })
+        return toPageDto(page);
     },
 
-    getByWorkspaceId(noteId: string) {
-        return prisma.page.findMany({
+    async getByWorkspaceId(noteId: string): Promise<PageListResponseDto> {
+        const pages = await prisma.page.findMany({
             where: { noteId },
             orderBy: { order: "asc" }
         })
+        return pages.map(toPageDto);
     },
-    update(noteId: string, pageId: string, data: PageUpdateData) {
-        return prisma.page.update({
+    async update(noteId: string, pageId: string, data: UpdatePageDto): Promise<PageResponseDto> {
+        const page = await prisma.page.update({
                 where: { id: pageId, noteId },
-                data,
+                data: UpdatePageSchema.parse(data),
             });
-    }, findMatchedPages(noteId: string, question: string) {
+        return toPageDto(page);
+    }, findMatchedPages(noteId: string, question: string): Promise<MatchedPageDto[]> {
         return prisma.$queryRaw<
-        { content: string; priority: number; importance: number; }[]
+        MatchedPageDto[]
         >`
             SELECT "content", "priority", "importance"
             FROM "Page"

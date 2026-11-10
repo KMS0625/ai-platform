@@ -12,22 +12,23 @@ import { usePromptWorkspaceContext } from "@/context/PromptspaceContext";
 type SideData = {
   workspaces: Workspace[];
   deleteWorkspace: (id: string) => void;
+  renameWorkspace: (id: string, title: string) => Promise<void>;
 };
 
 
 function useChatSideData(): SideData {
-  const { workspaceList: { workspaces }, chatWorkspace: { deleteWorkspace } } = useChatWorkspaceContext();
-  return { workspaces, deleteWorkspace };
+  const { workspaceList: { workspaces }, chatWorkspace: { deleteWorkspace, renameWorkspace } } = useChatWorkspaceContext();
+  return { workspaces, deleteWorkspace, renameWorkspace };
 }
 
 function useNoteSideData(): SideData {
-  const { workspaceList: { workspaces }, noteWorkspace: { deleteWorkspace } } = useNoteWorkspaceContext();
-  return { workspaces, deleteWorkspace };
+  const { workspaceList: { workspaces }, noteWorkspace: { deleteWorkspace, renameWorkspace } } = useNoteWorkspaceContext();
+  return { workspaces, deleteWorkspace, renameWorkspace };
 }
 
 function usePromptSideData(): SideData {
-  const { workspaceList: { workspaces }, promptWorkspace: { deleteWorkspace } } = usePromptWorkspaceContext();
-  return { workspaces, deleteWorkspace };
+  const { workspaceList: { workspaces }, promptWorkspace: { deleteWorkspace, renameWorkspace } } = usePromptWorkspaceContext();
+  return { workspaces, deleteWorkspace, renameWorkspace };
 }
 
 
@@ -35,6 +36,7 @@ function SideContainerInner({
   section,
   workspaces,
   deleteWorkspace,
+  renameWorkspace,
 }: { section: Section } & SideData) {
   const router = useRouter();
   const { workspaceId } = useParams<{ workspaceId?: string }>();
@@ -55,6 +57,7 @@ function SideContainerInner({
       onCreate={() => router.push(sectionPath(section))}
       onSelect={(id) => router.push(collectionPath(section, id))}
       onDelete={handleDelete}
+      onRename={renameWorkspace}
       newButtonContent={buttonLabel}
       title={label}
     />

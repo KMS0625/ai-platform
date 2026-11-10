@@ -92,7 +92,7 @@
   display: flex;
   align-items: center;
 
-  padding: 0 40px 0 12px; /* 오른쪽 x 버튼 자리 */
+  padding: 0 72px 0 12px;
 
   border: none;
   border-radius: 5px;
@@ -173,6 +173,20 @@
 .deleteButton:focus-visible {
   outline: 2px solid #4c8dff;
   outline-offset: 1px;
+}
+
+.renameButton {
+  right: 36px;
+}
+
+.renameButton:hover {
+  color: #222;
+}
+
+@media (hover: none) {
+  .deleteButton {
+    opacity: 1;
+  }
 }
 
 /* 선택됨 */

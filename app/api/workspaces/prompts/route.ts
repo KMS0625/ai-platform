@@ -1,25 +1,10 @@
-import { promptService } from "@/service/promptServie";
 import { NextResponse } from "next/server";
+import { handler, readOptionalJson } from "@/lib/server/http";
+import { CreatePromptSchema } from "@/zrc/lib/schemas/prompt";
+import { promptService } from "@/service/promptServie";
 
-export async function GET() {
-    try {
-        const prompts = await promptService.getAllTitle();
-        return NextResponse.json(prompts);
-    } catch (error) {
-        console.error("[GET prompts]", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-    }
-}
- 
-export async function POST() {
-    try {
-        console.log("작동됨?");
-        const prompt = await promptService.create();
-        console.log("ㅇㅇㅇ?", prompt);
-        return NextResponse.json(prompt, { status: 201 });
-    } catch (error) {
-        console.error("[POST prompt]", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-    }
-}
- 
+export const GET = handler(async () => NextResponse.json(await promptService.getAllTitle()));
+export const POST = handler(async request => {
+    const data = CreatePromptSchema.parse(await readOptionalJson(request));
+    return NextResponse.json(await promptService.create(data), { status: 201 });
+});

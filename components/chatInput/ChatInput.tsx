@@ -10,6 +10,7 @@ type ChatInputProps = {
     onChange: (text: string) => void;
     onSubmit: () => void;
     disabled?: boolean;
+    isWaiting: boolean,
 }
 
 function ChatInput({
@@ -17,12 +18,13 @@ function ChatInput({
     onChange,
     onSubmit,
     disabled = false,
+    isWaiting,
 }: ChatInputProps) {
     const isEmpty = value.trim() === "";
     const canSubmit = !isEmpty && !disabled;
 
     const handleSubmit = () => {
-        if (!canSubmit)
+        if (isEmpty && !isWaiting)
             return;
         onSubmit();
     }
@@ -57,16 +59,19 @@ function ChatInput({
                 <button
                     className={clsx(
                         styles.submitButton,
-                        canSubmit && styles.active
+                        (isWaiting || !isEmpty) 
+                        && styles.active
                     )}
                     onClick={handleSubmit}
-                    disabled={!canSubmit}
+                    disabled={isEmpty}
                 >
-                    ↑
+                    {"↑"}
                 </button>
             </div>
         </section>
     )
 }
+
+//isWaiting ? "◼" : 
 
 export default ChatInput;

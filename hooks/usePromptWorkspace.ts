@@ -13,7 +13,7 @@ export function usePromptWorkspace(workspaceList: ReturnType<typeof useWorkspace
     const workspaceId = params.workspaceId;
     const router = useRouter();
 
-    const { schedule, flush, discard } = usePromptAutoSave();
+    const { schedule, flush, discard, discardFields } = usePromptAutoSave();
 
     const [prompt, setPrompt] = useState<Prompt | null>(null);
     const [isSidebarLoading, setSidebarLoading] = useState(true);
@@ -105,7 +105,20 @@ export function usePromptWorkspace(workspaceList: ReturnType<typeof useWorkspace
     // 화면은 컴포넌트가 직접 들고 있으므로 저장 예약만 하면 됨
     const updatePrompt = (changes: PromptUpdateData) => {
         if (!workspaceId) return;
+        if (changes.title !== undefined) {
+            const title = changes.title;
+            setPrompt(prev => prev ? { ...prev, title } : prev);
+            workspaceList.renameWorkspace(workspaceId, title);
+        }
         schedule(workspaceId, changes);
+    };
+
+    const renameWorkspace = async (id: string, title: string) => {
+        await flush();
+        discardFields(id, ["title"]);
+        const updated = await promptApi.rename(id, { title });
+        workspaceList.renameWorkspace(id, updated.title);
+        setPrompt(prev => prev?.id === id ? { ...prev, title: updated.title } : prev);
     };
 
     const deleteWorkspace = async (id: string) => {
@@ -131,5 +144,6 @@ export function usePromptWorkspace(workspaceList: ReturnType<typeof useWorkspace
         createPrompt,
         updatePrompt,
         deleteWorkspace,
+        renameWorkspace,
     };
 }

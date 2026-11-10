@@ -3,16 +3,11 @@ import { chatServie } from "../chat.servie";
 import { getMessages } from "../messageService";
 import { pageService } from "../pageService";
 import { promptService } from "../promptServie";
-import { hi } from "zod/locales";
-import { PromptParams } from "@/models/Prompt";
+import type { PromptParamsDto } from "@/zrc/lib/schemas/prompt";
+import type { GenerateContextAnswerDto, GenerateTextResponseDto } from "@/zrc/lib/schemas/ai";
 import { dispatcher } from "./dispatcherService";
 
-export async function contextService(
-    chatId: string,
-    threadId: string,
-    question: string,
-    model: string,
-) {
+export async function contextService({ chatId, threadId, question, model }: GenerateContextAnswerDto): Promise<GenerateTextResponseDto> {
     const histories = await getMessages(threadId);
     const context = await chatServie.getContext(chatId);
 
@@ -28,7 +23,7 @@ export async function contextService(
     ? await promptService.get(context.promptId)
     : null;
 
-    const params: PromptParams | undefined = prompt
+    const params: PromptParamsDto | undefined = prompt
     ? {
         temperature: prompt.temperature,
         topP: prompt.topP,
@@ -47,7 +42,7 @@ export async function contextService(
         maxToken: prompt === null || prompt.maxInputTokens === 0 ? 8192 : prompt.maxInputTokens,
     });
 
-    const answer = await dispatcher(ChatMessage, model, params);
+    const answer = await dispatcher({ message: ChatMessage, model, config: params });
 
     return answer;
 }

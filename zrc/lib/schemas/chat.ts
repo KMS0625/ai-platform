@@ -1,6 +1,6 @@
-import { Crete_Round } from "next/font/google";
 import z from "zod";
 import { CreateThreadSchema } from "./thread";
+import type { ThreadResponseDto } from "./thread";
 
 export const CreateChatSchema = z.object({
     title: z.string().trim().optional(),
@@ -17,10 +17,13 @@ export type ChatResponseDto = {
     id: string,
     title: string;
     createdAt: string;
-    updatedAt: string;
+    order: number;
     noteId: string | null;
     promptId: string | null;
 };
+
+export type ChatWithThreadsResponseDto = ChatResponseDto & { threads: ThreadResponseDto[] };
+export type ChatContextDto = Pick<ChatResponseDto, "noteId" | "promptId">;
 
 
 // export const ChatListQuerySchema = z.object({

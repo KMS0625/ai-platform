@@ -1,4 +1,3 @@
-import { Section } from "@/constants/section";
 import { Workspace } from "@/models/Workspace";
 import { useCallback, useState } from "react";
 
@@ -19,5 +18,9 @@ export function useWorkspaceList() {
         );
     }
 
-    return { workspaces, setWorkspaces, prependWorkspace, replaceWorkspace, deleteWorkspace };
+    const renameWorkspace = useCallback((id: string, title: string) => {
+        setWorkspaces(prev => prev.map(workspace => workspace.id === id ? { ...workspace, title } : workspace));
+    }, []);
+
+    return { workspaces, setWorkspaces, prependWorkspace, replaceWorkspace, deleteWorkspace, renameWorkspace };
 }

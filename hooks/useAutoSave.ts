@@ -8,6 +8,7 @@ type Options<T> = {
 export function useAutoSave<T>({ save, delay = 1000 }: Options<T>) {
     const pending = useRef(new Map<string, Partial<T>>());
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const inFlight = useRef<Promise<void>>(Promise.resolve());
 
     const saveRef = useRef(save);
     useEffect(() => {
@@ -19,12 +20,12 @@ export function useAutoSave<T>({ save, delay = 1000 }: Options<T>) {
             clearTimeout(timer.current);
             timer.current = null;
         }
-        if (pending.current.size === 0) return;
+        if (pending.current.size === 0) return inFlight.current;
 
         const batch = pending.current;
         pending.current = new Map();
 
-        await Promise.all(
+        const saving = inFlight.current.then(() => Promise.all(
             [...batch].map(async ([id, changes]) => {
                 try {
                     await saveRef.current(id, changes);
@@ -36,7 +37,9 @@ export function useAutoSave<T>({ save, delay = 1000 }: Options<T>) {
                     });
                 }
             })
-        );
+        )).then(() => undefined);
+        inFlight.current = saving;
+        await saving;
     }, []);
 
     const schedule = useCallback(
@@ -56,6 +59,13 @@ export function useAutoSave<T>({ save, delay = 1000 }: Options<T>) {
         pending.current.delete(id);
     }, []);
 
+    const discardFields = useCallback((id: string, fields: (keyof T)[]) => {
+        const changes: Partial<T> = { ...pending.current.get(id) };
+        for (const field of fields) delete changes[field];
+        if (Object.keys(changes).length) pending.current.set(id, changes);
+        else pending.current.delete(id);
+    }, []);
+
     useEffect(() => {
         const onHidden = () => {
             if (document.visibilityState === "hidden") flush();
@@ -72,5 +82,5 @@ export function useAutoSave<T>({ save, delay = 1000 }: Options<T>) {
         };
     }, [flush]);
 
-    return { schedule, flush, discard };
+    return { schedule, flush, discard, discardFields };
 }

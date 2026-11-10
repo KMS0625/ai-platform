@@ -1,63 +1,25 @@
-import { Thread, ThreadCreateData } from "@/models/Thread";
+import { API } from "@/lib/api/route";
+import { request } from "@/lib/api/client";
+import type { Thread } from "@/models/Thread";
+import type { CreateThreadDto, ThreadListResponseDto, ThreadResponseDto } from "@/zrc/lib/schemas/thread";
+import type { MessageHistoryResponseDto } from "@/zrc/lib/schemas/message";
 import { toMessageViews, toThread } from "@/api/mapper";
-import { MessageView } from "@/view-model/ThreadsWorkspace-vies";
+import type { MessageView } from "@/view-model/ThreadsWorkspace-vies";
 
 export const threadApi = {
-    async create(chatId: string, thread: ThreadCreateData): Promise<Thread> {
-        const response = await fetch(`/api/workspaces/chats/${chatId}/threads`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ thread })
-        })
-
-        if (!response.ok) {
-            throw new Error("Faild to create workspace");
-        }
-
-        const data = await response.json();
-
+    async create(chatId: string, thread: CreateThreadDto): Promise<Thread> {
+        const data = await request<ThreadResponseDto>(API.chat.threads(chatId), { method: "POST", json: { thread } });
         return toThread(data);
     },
-    async getAll(chatId: string, signal?: AbortSignal,): Promise<Thread[]> {
-        const response = await fetch(`/api/workspaces/chats/${chatId}/threads`, {
-            method: "GET",
-            signal,
-        });
-
-        if (response.status === 404) {
-            throw new Error("NOT_FOUND");
-        }      
-
-        if (!response.ok) {
-            throw new Error("Failed to get Thread");
-        }
-
-        const data = await response.json();
-
+    async getAll(chatId: string, signal?: AbortSignal): Promise<Thread[]> {
+        const data = await request<ThreadListResponseDto>(API.chat.threads(chatId), { signal });
         return data.map(toThread);
     },
-    async delete(chatId: string, threadId: string) {
-        const response = await fetch(`/api/workspaces/chats/${chatId}/threads/${threadId}`, {
-            method: "DELETE"
-         });
-
-        if (!response.ok) {
-            throw new Error("Failed to delete Thread");
-        }
+    delete(chatId: string, threadId: string): Promise<void> {
+        return request<void>(API.chat.threadDetail(chatId, threadId), { method: "DELETE" });
     },
     async getMessages(chatId: string, threadId: string, signal?: AbortSignal): Promise<MessageView[]> {
-        const response = await fetch(
-            `/api/workspaces/chats/${chatId}/threads/${threadId}/messages`,
-            { 
-                method: "GET",
-                signal
-             },
-        );
-
-        if (response.status === 404) throw new Error("NOT_FOUND");
-        if (!response.ok) throw new Error("Failed to get history");
-
-        const data = await response.json();
+        const data = await request<MessageHistoryResponseDto>(API.chat.messages(chatId, threadId), { signal });
         return toMessageViews([...data].reverse());
-    }
-}
+    },
+};

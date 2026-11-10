@@ -1,89 +1,33 @@
-import { ThreadCreateData } from "@/models/Thread"
+import { API } from "@/lib/api/route";
+import { request } from "@/lib/api/client";
+import type { CreateThreadDto } from "@/zrc/lib/schemas/thread";
+import type { ChatResponseDto, ChatWithThreadsResponseDto, ChatContextDto } from "@/zrc/lib/schemas/chat";
 import { toThread, toWorkspace } from "@/api/mapper";
-import { Workspace } from "@/models/Workspace";
-import { ChatContext } from "@/models/ChatContext";
+import type { Workspace } from "@/models/Workspace";
+import type { UpdateTitleDto } from "@/zrc/lib/schemas/title";
 
 export const chatApi = {
-    async create(thread: ThreadCreateData) {
-        const response = await fetch(`/api/workspaces/chats`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ thread })
-        })
-
-        if (!response.ok) {
-            throw new Error("Faild to create workspace");
-        }
-
-        const data = await response.json();
-
-        return {
-            workspace: toWorkspace(data),
-            thread: toThread(data.threads[0])
-        }
+    rename(chatId: string, data: UpdateTitleDto): Promise<ChatResponseDto> {
+        return request<ChatResponseDto>(API.chat.detail(chatId), { method: "PATCH", json: data });
     },
-    async getAll() {
-        const response = await fetch("/api/workspaces/chats", {
-        method: "GET",
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to get Workspace");
-        }
-
-        const data = await response.json();
-
+    async create(thread: CreateThreadDto) {
+        const data = await request<ChatWithThreadsResponseDto>(API.chat.list, { method: "POST", json: { thread } });
+        return { workspace: toWorkspace(data), thread: toThread(data.threads[0]) };
+    },
+    async getAll(): Promise<Workspace[]> {
+        const data = await request<ChatResponseDto[]>(API.chat.list);
         return data.map(toWorkspace);
     },
-    async delete(chatId: string) {
-        const response= await fetch(`/api/workspaces/chats/${chatId}`, {
-            method: "DELETE"
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to delete Thread");
-        }
+    delete(chatId: string): Promise<void> {
+        return request<void>(API.chat.detail(chatId), { method: "DELETE" });
     },
     async get(chatId: string): Promise<Workspace> {
-        const response = await fetch(`/api/workspaces/chats/${chatId}`, {
-        method: "GET",
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to get Workspace");
-        }
-
-        const data = await response.json();
-
-        return toWorkspace(data);
+        return toWorkspace(await request<ChatResponseDto>(API.chat.detail(chatId)));
     },
-    async getContext(chatId: string): Promise<ChatContext> {
-        const response = await fetch(`/api/workspaces/chats/${chatId}/context`, {
-            method: "GET",
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to get chat context: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return {
-            noteId: data.noteId ?? null,
-            promptId: data.promptId ?? null,
-        };
+    getContext(chatId: string): Promise<ChatContextDto> {
+        return request<ChatContextDto>(API.chat.context(chatId));
     },
-    async setContext(chatId: string, value: ChatContext): Promise<ChatContext> {
-        const response = await fetch(`/api/workspaces/chats/${chatId}/context`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(value),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to set chat context: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return { noteId: data.noteId ?? null, promptId: data.promptId ?? null };
+    setContext(chatId: string, value: ChatContextDto): Promise<ChatContextDto> {
+        return request<ChatContextDto>(API.chat.context(chatId), { method: "PUT", json: value });
     },
-}
+};

@@ -1,64 +1,91 @@
-import type { Prisma } from "@/generated/prisma/client";
 import prisma from "@/lib/prisma";
-import { ThreadCreateData } from "@/models/Thread";
-import { ChatCreateData } from "@/models/Workspace";
+import { CreateChatSchema, UpdateChatSchema } from "@/zrc/lib/schemas/chat";
+import type { CreateChatDto, UpdateChatDto, ChatResponseDto, ChatWithThreadsResponseDto, ChatContextDto } from "@/zrc/lib/schemas/chat";
+import type { ChatWorkspace } from "@/generated/prisma/client";
 
 const ORDER_STEP = 10;
-const DEFALUT_TITLE = "새로운 채팅";
+const DEFAULT_TITLE = "새로운 채팅";
+
+function toChatDto(chat: ChatWorkspace): ChatResponseDto {
+    return { ...chat, createdAt: chat.createdAt.toISOString() };
+}
+
+const contextSelect = { noteId: true, promptId: true } as const;
+
+async function create(data: CreateChatDto): Promise<ChatWithThreadsResponseDto> {
+    const chat = CreateChatSchema.parse(data);
+
+    const created = await prisma.$transaction(async (tx) => {
+        const { _max } = await tx.chatWorkspace.aggregate({
+            _max: { order: true },
+        });
+        const total = await tx.chatWorkspace.count();
+
+        return tx.chatWorkspace.create({
+            data: {
+                title: chat.title ?? `${DEFAULT_TITLE} ${total}`,
+                order: (_max.order ?? 0) + ORDER_STEP,
+                threads: {
+                    create: {
+                        title: chat.thread.title ?? "new thread 0",
+                        model: chat.thread.model,
+                    },
+                },
+            },
+            include: { threads: true },
+        });
+    });
+    return {
+        ...toChatDto(created),
+        threads: created.threads.map(thread => ({ ...thread, createdAt: thread.createdAt.toISOString() })),
+    };
+}
 
 export const chatServie = {
-    createWithThread(threadData: ThreadCreateData) {
-        return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            const { _max } = await tx.chatWorkspace.aggregate({
-                _max: { order: true }
-            })
-
-            const total = await prisma.chatWorkspace.count();
-
-            return tx.chatWorkspace.create({
-                data: {
-                    title: `${DEFALUT_TITLE} ${total}`,
-                    order: (_max.order ?? 0) + ORDER_STEP,
-                    threads: {
-                        create: {
-                            title: `new thread 0`,
-                            model: threadData.model,
-                        }
-                    }
-                },
-                include: { threads: true },
-            })
-        })
+    create,
+    createWithThread(thread: CreateChatDto["thread"]) {
+        return create({ thread });
     },
-    findAll() {
-        return prisma.chatWorkspace.findMany({
+    async update(id: string, data: UpdateChatDto): Promise<ChatResponseDto> {
+        const chat = await prisma.chatWorkspace.update({
+            where: { id },
+            data: UpdateChatSchema.parse(data),
+        });
+        return toChatDto(chat);
+    },
+    async findAll(): Promise<ChatResponseDto[]> {
+        const chats = await prisma.chatWorkspace.findMany({
             orderBy: { order: "desc" }
         })
+        return chats.map(toChatDto);
     },
-    delete(id: string) {
-        return prisma.chatWorkspace.delete({
+    async delete(id: string): Promise<ChatResponseDto> {
+        const chat = await prisma.chatWorkspace.delete({
             where: { id }
         })
+        return toChatDto(chat);
     },
-    get(id: string) {
-        return prisma.chatWorkspace.findUnique({
+    async get(id: string): Promise<ChatResponseDto | null> {
+        const chat = await prisma.chatWorkspace.findUnique({
             where: { id }
         })
+        return chat ? toChatDto(chat) : null;
     },
-    getContext(id: string) {
+    getContext(id: string): Promise<ChatContextDto | null> {
         return prisma.chatWorkspace.findUnique({
             where: { id },
-            select: { noteId: true, promptId: true },
+            select: contextSelect,
         });
     },
     setContext(
         id: string,
-        data: { noteId?: string | null; promptId?: string | null }
-    ) {
+        data: Pick<UpdateChatDto, "noteId" | "promptId">
+    ): Promise<ChatContextDto> {
+        const { noteId, promptId } = UpdateChatSchema.parse(data);
         return prisma.chatWorkspace.update({
             where: { id },
-            data,
-            select: { noteId: true, promptId: true },
+            data: { noteId, promptId },
+            select: contextSelect,
         });
     },
 }

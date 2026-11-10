@@ -14,8 +14,6 @@ import { questionApi } from "@/api/chat/questionApi";
 import { QuestionCreateData } from "@/models/Question";
 import { AnswerApi } from "@/api/chat/answerApi";
 import { useChatContext } from "./useChatContext";
-import { fetchChatList } from "@/zrc/lib/api/chat";
-import { Workspace } from "@/models/Workspace";
 
 export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceList>) {
     const { replaceThreads, clearThreads } = useThread();
@@ -30,23 +28,15 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
     const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
     const [isSidebarLoading, setSidebarLoading] = useState(true);
     const [isDeleting, setDeleting] = useState(false);
-
+    const [isWating, setWaiting] = useState(false);
+    
     useEffect(() => {
         clearView();
         const fetchWorkspaces = async () => {
             setSidebarLoading(true);
 
             try {
-                //const workspaces = await chatApi.getAll();
-                const chat = await fetchChatList();
-                const workspaces: Workspace[] = chat.items.map((item) => ({
-                    id: item.id,
-                    title: item.title,
-                    noteId: null,
-                    promptId: null,
-                    createdAt: new Date(item.createdAt),
-                    order: 0,
-                }));
+                const workspaces = await chatApi.getAll();
 
                 workspaceList.replaceWorkspace(workspaces)
             } catch (error) {
@@ -183,7 +173,9 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
             const question = await questionApi.create(workspaceId, questionData);
             appendQuestion(question);
 
-            //const threadSet = await threadApi.getAll(workspaceId);
+            setWaiting(true);
+            const controller = new AbortController();
+            controllerRef.current = controller;
             await Promise.allSettled(
                 threadViews.map(async (thread) => {
                     try {
@@ -195,38 +187,39 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
                             question.id,
                             thread.thread.model,
                             question.content,
+                            controller.signal,
                         );
                         appendAnswer(answer); // 먼저 온 순서대로 반영
                     } catch (error) {
+                        if (error instanceof Error && error.name === "AbortError") {
+                            return;
+                        }
                         console.log(`thread ${thread.thread.id} 답변 실패`, error);
                     } finally {
                         setWaitingForResponse(thread.thread.id, false);
                     }
                 }),
-                // threadSet.map(async (thread) => {
-                //     try {
-                //         const answer = await AnswerApi.getAnswer(
-                //             workspaceId,
-                //             thread.id,
-                //             question.id,
-                //             thread.model,
-                //             question.content,
-                //         );
-                //         appendAnswer(answer); // 먼저 온 순서대로 반영
-                //     } catch (error) {
-                //         console.log(`thread ${thread.id} 답변 실패`, error);
-                //     }
-                // }),
             );
         } catch (error) {
             console.log(error);
+        } finally {
+            setWaiting(false);
         }
     }
 
+    const renameWorkspace = async (id: string, title: string) => {
+        const updated = await chatApi.rename(id, { title });
+        workspaceList.renameWorkspace(id, updated.title);
+    };
+
     const { context, saveContext } = useChatContext(workspaceId);
 
-
+    const controllerRef = useRef<AbortController|null>(null);
+    const handleStop = () => {
+        controllerRef.current?.abort();
+    }
     return { 
+        renameWorkspace,
         context, 
         createNewWorkspace, 
         createNewThread, 
@@ -238,6 +231,8 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
         saveContext, 
         setIsWorkspaceLoading,
         isDeleting, 
+        isWating,
+        handleStop,
     }
 }
 

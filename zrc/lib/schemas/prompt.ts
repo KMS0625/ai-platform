@@ -13,3 +13,24 @@ export const CreatePromptSchema = z.object({
 })
 
 export type CreatePromptDto = z.infer<typeof CreatePromptSchema>
+
+export const UpdatePromptSchema = CreatePromptSchema;
+export type UpdatePromptDto = z.infer<typeof UpdatePromptSchema>;
+export type PromptParamsDto = {
+    temperature: number;
+    topP: number;
+    frequencyPenalty: number;
+    presencePenalty: number;
+    maxOutputTokens: number;
+    maxInputTokens: number;
+};
+export type PromptResponseDto = PromptParamsDto & {
+    id: string;
+    title: string;
+    description: string;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
+};
+export type PromptListItemDto = Pick<PromptResponseDto, "id" | "title" | "createdAt">;
+export type PromptListResponseDto = PromptListItemDto[];

@@ -135,13 +135,25 @@
   background: #e4e4e4;
 }
 
-.deleteButton {
-  background: #e5484d;
+.submitButton {
+  background: #202020;
   color: #fff;
 }
 
-.deleteButton:hover {
-  background: #d13a3f;
+.submitButton:hover {
+  background: #383838;
+}
+
+.button:disabled,
+.closeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 0.75rem 0 0;
+  color: #c52b35;
+  font-size: 0.85rem;
 }
 
 @keyframes modalAppear {

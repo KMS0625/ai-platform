@@ -1,45 +1,13 @@
-import { ChatMessage } from "@/lib/context/buildContext";
-import { AnswerCreateData } from "@/models/Answer";
+import { NextResponse } from "next/server";
+import { handler } from "@/lib/server/http";
+import { GenerateAnswerSchema } from "@/zrc/lib/schemas/answer";
 import { contextService } from "@/service/ai/contextService";
-import { dispatcher } from "@/service/ai/dispatcherService";
 import { answerService } from "@/service/answerService";
-import { chatServie } from "@/service/chat.servie";
-import { getMessages } from "@/service/messageService";
-import { pageService } from "@/service/pageService";
-import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: Promise<{ chatId: string; threadId: string; questionId: string }> },
-) {
-    try {
-        const { chatId, threadId, questionId } = await params;
-
-        const body = await request.json().catch(() => null);
-        const model = body?.model;
-        const question = body?.question;
-
-        if (typeof model !== "string" || typeof question !== "string") {
-            return NextResponse.json({ error: "BAD_REQUEST" }, { status: 400 });
-        }
-
-        const answer = await contextService(chatId, threadId, question, model);        
-
-        const data: AnswerCreateData = {
-            content: answer,
-            status: "completed",
-        }
-        const response = await answerService.create(questionId, threadId, data);
-
-        console.log("답변 저장 성공", response);
-
-        return NextResponse.json(response, { status: 200 });
-
-    } catch (error) {
-        console.error("[POST answer]", error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 },
-        );
-    }
-}
+export const POST = handler<{ chatId: string; threadId: string; questionId: string }>(async (request, { params }) => {
+    const { chatId, threadId, questionId } = await params;
+    const { model, question } = GenerateAnswerSchema.parse(await request.json());
+    const answer = await contextService({ chatId, threadId, question, model });
+    const response = await answerService.create(questionId, threadId, { content: answer.content, status: "completed" });
+    return NextResponse.json(response);
+});

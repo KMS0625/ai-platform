@@ -19,6 +19,7 @@ type SideProps = {
     footerContent?: ReactNode;
     Workspaces: Workspace[];
     onDelete: (id: string) => void;
+    onRename: (id: string, title: string) => Promise<void>;
 };
 
 export default function Side({
@@ -30,6 +31,7 @@ export default function Side({
     title = "history",
     footerContent = "setting",
     onDelete,
+    onRename,
 }: SideProps) {
 
     return (
@@ -48,6 +50,7 @@ export default function Side({
                         isActive={item.id === selectedId}
                         onSelect={onSelect}
                         onDelete={onDelete}
+                        onRename={onRename}
                     />
                 ))}
             </ul>
