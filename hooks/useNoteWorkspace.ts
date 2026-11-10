@@ -15,7 +15,7 @@ export function useNoteWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
     const router = useRouter();
 
     const { appendView, replaceViews, clearView, pages, updateView, deleteView} = usePage();
-    const { schedule, flush, discard } = usePageAutoSave(workspaceId);
+    const { schedule, flush } = usePageAutoSave(workspaceId);
 
     const [isSidebarLoading, setSidebarLoading] = useState(true);
     const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
@@ -75,6 +75,8 @@ export function useNoteWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
                     if (error instanceof Error && error.name === "AbortError") {
                         return;
                     }
+                    alert(`${params.workspaceId} 잘못된 접근`);
+                    router.push(sectionPath("note"))
                 } finally {
                     setIsWorkspaceLoading(false);
                 }
@@ -94,6 +96,7 @@ export function useNoteWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
                     console.log("notespace 시도");
                     await noteApi.delete(workspaceId);
                     workspaceList.deleteWorkspace(workspaceId);
+                    
                 } catch (error) {
                     console.log(error);
                 }
@@ -114,6 +117,8 @@ export function useNoteWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
     
             } catch (error) {
                 console.error("페이지 조회 실패:", error); 
+                alert(`${params.workspaceId} 잘못된 접근`)
+                router.push(sectionPath('note'))
             }
         }
 
@@ -123,13 +128,18 @@ export function useNoteWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
 
             try {
                 await pageApi.delete(workspaceId, pageId)
-                deleteView(pageId);
+                const isEmpty = deleteView(pageId);
+
+                if (isEmpty) {
+                    deleteWorkspace(workspaceId);
+                    router.push(sectionPath('note'));
+                }
             } catch (error) {
                 console.error("페이지 삭제 실패:", error); 
             }
             
         }
 
-    return { createNote, pages, deleteWorkspace, updatePage, createPage, deletePage }
+    return { createNote, pages, deleteWorkspace, updatePage, createPage, deletePage, isWorkspaceLoading }
 }
 

@@ -32,6 +32,7 @@ model ChatWorkspace {
   questions Question[]
 
   createdAt DateTime @default(now())
+  @@index([order])
 }
 
 model Thread {
@@ -78,6 +79,7 @@ model Answer {
   @@index([threadId, createdAt])
   @@index([questionId])
 }
+
 
 model Note {
   id    String @id @default(uuid())
@@ -127,3 +129,6 @@ model Prompt {
   updatedAt      DateTime        @updatedAt
   chatWorkspaces ChatWorkspace[]
 }
+
+
+

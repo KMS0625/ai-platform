@@ -11,14 +11,14 @@ export function useThreadView() {
 
     const appendView = (thread: Thread, message: MessageView[] = []) => {
         const view = buildThreadView(thread, message);
-
         setThreadViews((prev) => [...prev, view])
     }
 
-    const buildThreadView = (thread: Thread, messages: MessageView[] = []): ThreadView => {
+    const buildThreadView = (thread: Thread, messages: MessageView[] = [], isWaitingForResponse: boolean = false): ThreadView => {
         return {
             thread,
             messages,
+            isWaitingForResponse,
         };
     };
 
@@ -65,6 +65,16 @@ export function useThreadView() {
             })));
     };
 
+    const setWaitingForResponse = (id: string, value: boolean) => {
+        setThreadViews(prev =>
+            prev.map(thread =>
+                thread.thread.id === id
+                    ? { ...thread, isWaitingForResponse: value }
+                    : thread
+            )
+        );
+    };
+
     return {
         threadViews,
         appendView,
@@ -73,5 +83,6 @@ export function useThreadView() {
         deleteView,
         appendAnswer,
         appendQuestion,
+        setWaitingForResponse,
     };
 }

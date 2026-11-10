@@ -3,11 +3,15 @@ import { chatServie } from "../chat.servie";
 import { getMessages } from "../messageService";
 import { pageService } from "../pageService";
 import { promptService } from "../promptServie";
+import { hi } from "zod/locales";
+import { PromptParams } from "@/models/Prompt";
+import { dispatcher } from "./dispatcherService";
 
 export async function contextService(
     chatId: string,
     threadId: string,
-    question: string
+    question: string,
+    model: string,
 ) {
     const histories = await getMessages(threadId);
     const context = await chatServie.getContext(chatId);
@@ -21,8 +25,19 @@ export async function contextService(
     : []; 
 
     const prompt = context?.promptId
-        ? await promptService.get(context.promptId)
-        : null;
+    ? await promptService.get(context.promptId)
+    : null;
+
+    const params: PromptParams | undefined = prompt
+    ? {
+        temperature: prompt.temperature,
+        topP: prompt.topP,
+        maxInputTokens: prompt.maxInputTokens,
+        maxOutputTokens: prompt.maxOutputTokens,
+        frequencyPenalty: prompt.frequencyPenalty,
+        presencePenalty: prompt.presencePenalty,
+    }
+    : undefined;
 
     const ChatMessage = buildContext({
         systemPrompt: prompt?.content,
@@ -32,5 +47,7 @@ export async function contextService(
         maxToken: prompt === null || prompt.maxInputTokens === 0 ? 8192 : prompt.maxInputTokens,
     });
 
-    return ChatMessage;
+    const answer = await dispatcher(ChatMessage, model, params);
+
+    return answer;
 }

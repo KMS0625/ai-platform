@@ -21,7 +21,9 @@ export function usePage() {
     }, []);
 
     const deleteView = useCallback((id: string) => {
-        setPages((prev) => prev.filter((page) => page.id !== id));
+        const next = pages.filter((v) => v.id !== id);
+        setPages(next);
+        return pages.length === 0;
     }, []);
 
     const updateView = useCallback((id: string, data: Partial<Page>) => {

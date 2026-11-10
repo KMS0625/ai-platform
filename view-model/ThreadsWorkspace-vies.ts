@@ -6,6 +6,7 @@ import { Thread } from "@/models/Thread";
 export type ThreadView = {
     thread: Thread;
     messages: MessageView[];
+    isWaitingForResponse: boolean;
 }
 
 

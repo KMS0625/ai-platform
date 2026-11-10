@@ -1,4 +1,5 @@
-// style
+
+"use client"
 import styles from "./threadsWorkspace.module.css";
 
 import { ThreadView } from "@/view-model/ThreadsWorkspace-vies";
@@ -41,6 +42,9 @@ function ThreadsWorkspace({ threadsView }: ThreadsWorkspaceProps) {
 
     const handleSubmit = async () => {
         const question = text.trim();
+
+        if (!question || isLoading) return;
+        
         setText("");
         setIsLoading(true);
 

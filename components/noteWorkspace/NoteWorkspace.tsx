@@ -1,4 +1,3 @@
-"use client";
 
 import { useNoteWorkspaceContext } from "@/context/NotespaceContextx";
 import styles from "./noteWorkspace.module.css";

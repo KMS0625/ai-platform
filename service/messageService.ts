@@ -6,8 +6,9 @@ export async function getMessages(
 ): Promise<ThreadMessage[]> {
   const answers = await answerService.findAnswersWithQuestion(threadId);
 
+  // 최신 메시지부터 가져온다
   return answers.flatMap<ThreadMessage>((a) => [
-    { role: "user", content: a.question.content },
     { role: "ai", content: a.content ?? "" },
+    { role: "user", content: a.question.content },
   ]);
 }

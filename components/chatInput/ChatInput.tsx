@@ -1,10 +1,9 @@
+"use client"
 import styles from "./chatInput.module.css";
 import AutoResizeTextarea from "../autoResizeTextarea/AutoResizeTextarea";
 
 import { forwardRef, type KeyboardEvent } from "react";
 import clsx from "clsx";
-
-
 
 type ChatInputProps = {
     value: string;
@@ -25,14 +24,21 @@ function ChatInput({
     const handleSubmit = () => {
         if (!canSubmit)
             return;
-
         onSubmit();
     }
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!canSubmit)
+            return;
+
         if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            console.log("Enter pressed", {
+                disabled,
+                isEmpty,
+                canSubmit,
+            });
             e.preventDefault();
-            onSubmit();
+            handleSubmit();
         }
     }
 

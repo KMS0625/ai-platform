@@ -4,7 +4,7 @@ import { useWorkspaceList } from "./useWorkspaceList";
 import { useThread } from "./useThread";
 import { useParams, useRouter } from "next/navigation";
 import { collectionPath, sectionPath } from "@/constants/section";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThreadView } from "./useThreadViews";
 import { ModelInfo } from "@/lib/models";
 
@@ -14,22 +14,22 @@ import { questionApi } from "@/api/chat/questionApi";
 import { QuestionCreateData } from "@/models/Question";
 import { AnswerApi } from "@/api/chat/answerApi";
 import { useChatContext } from "./useChatContext";
+import { fetchChatList } from "@/zrc/lib/api/chat";
+import { Workspace } from "@/models/Workspace";
 
 export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceList>) {
-    const { threads, appendThread, replaceThreads, clearThreads } = useThread();
-    const { threadViews, appendView, replaceViews, clearView, deleteView, appendQuestion, appendAnswer } = useThreadView();
+    const { replaceThreads, clearThreads } = useThread();
+    const { threadViews, appendView, clearView, deleteView, appendQuestion, appendAnswer, setWaitingForResponse } = useThreadView();
 
     const params = useParams<{ workspaceId?: string }>();
     const workspaceId = params.workspaceId;
     const router = useRouter();
     
-    const [isSending, setIsSending] = useState(false);
     const sendingRef = useRef(false)
-
-
     const [isLoading, setIsLoading] = useState(false);
     const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(true);
     const [isSidebarLoading, setSidebarLoading] = useState(true);
+    const [isDeleting, setDeleting] = useState(false);
 
     useEffect(() => {
         clearView();
@@ -37,7 +37,17 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
             setSidebarLoading(true);
 
             try {
-                const workspaces = await chatApi.getAll();
+                //const workspaces = await chatApi.getAll();
+                const chat = await fetchChatList();
+                const workspaces: Workspace[] = chat.items.map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    noteId: null,
+                    promptId: null,
+                    createdAt: new Date(item.createdAt),
+                    order: 0,
+                }));
+
                 workspaceList.replaceWorkspace(workspaces)
             } catch (error) {
                 console.error("워크스페이스 조회 실패:", error);
@@ -63,7 +73,7 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
 
             try {
                 const threadSet = await threadApi.getAll(workspaceId, controller.signal);
-                threadSet.map(async (t) => {
+                    threadSet.map(async (t) => {
                     const message = await threadApi.getMessages(workspaceId, t.id, controller.signal);
 
                     appendView(t, message);
@@ -75,6 +85,8 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
                 if (error instanceof Error && error.name === "AbortError") {
                     return;
                 }
+                alert(`${params.workspaceId} 잘못된 접근`)
+                router.push(sectionPath('chat'))
             } finally {
                 setIsWorkspaceLoading(false);
             }
@@ -116,6 +128,8 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
 
         } catch (error) {
             console.log(error);
+            alert(`${params.workspaceId} 잘못된 접근`)
+            router.push(sectionPath('chat'))
         }
     }
 
@@ -127,10 +141,15 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
             await threadApi.delete(workspaceId, threadId);
             const becameEmpty = deleteView(threadId);
 
-            if (becameEmpty)
+            if (becameEmpty) {
+                setDeleting(true);
                 deleteWorkspace(workspaceId);
+                router.push(sectionPath("chat"))
+            }
         } catch (error) {
             console.log(error);
+        } finally {
+            setDeleting(false);
         }
     }
 
@@ -141,11 +160,14 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
         console.log("workspace 삭제시도");
 
         try {
+            setDeleting(true);
             await chatApi.delete(workspaceId);
             workspaceList.deleteWorkspace(workspaceId);
             
         } catch (error) {
             console.log(error);
+        } finally {
+            setDeleting(false);
         }
     }
     
@@ -161,23 +183,40 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
             const question = await questionApi.create(workspaceId, questionData);
             appendQuestion(question);
 
-            const threadSet = await threadApi.getAll(workspaceId);
+            //const threadSet = await threadApi.getAll(workspaceId);
             await Promise.allSettled(
-                threadSet.map(async (thread) => {
+                threadViews.map(async (thread) => {
                     try {
+                        setWaitingForResponse(thread.thread.id, true);
+                        
                         const answer = await AnswerApi.getAnswer(
                             workspaceId,
-                            thread.id,
+                            thread.thread.id,
                             question.id,
-                            thread.model,
+                            thread.thread.model,
                             question.content,
                         );
-                        console.log("이거 실행되어야 하는디", answer);
                         appendAnswer(answer); // 먼저 온 순서대로 반영
                     } catch (error) {
-                        console.log(`thread ${thread.id} 답변 실패`, error);
+                        console.log(`thread ${thread.thread.id} 답변 실패`, error);
+                    } finally {
+                        setWaitingForResponse(thread.thread.id, false);
                     }
                 }),
+                // threadSet.map(async (thread) => {
+                //     try {
+                //         const answer = await AnswerApi.getAnswer(
+                //             workspaceId,
+                //             thread.id,
+                //             question.id,
+                //             thread.model,
+                //             question.content,
+                //         );
+                //         appendAnswer(answer); // 먼저 온 순서대로 반영
+                //     } catch (error) {
+                //         console.log(`thread ${thread.id} 답변 실패`, error);
+                //     }
+                // }),
             );
         } catch (error) {
             console.log(error);
@@ -187,6 +226,18 @@ export function useChatWorkspace(workspaceList: ReturnType<typeof useWorkspaceLi
     const { context, saveContext } = useChatContext(workspaceId);
 
 
-    return { context, createNewWorkspace, createNewThread, deleteThread, deleteWorkspace, sendQuestion, threadViews, isWorkspaceLoading, saveContext }
+    return { 
+        context, 
+        createNewWorkspace, 
+        createNewThread, 
+        deleteThread, 
+        deleteWorkspace, 
+        sendQuestion, 
+        threadViews, 
+        isWorkspaceLoading, 
+        saveContext, 
+        setIsWorkspaceLoading,
+        isDeleting, 
+    }
 }
 

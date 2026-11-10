@@ -23,10 +23,7 @@ export async function POST(
             return NextResponse.json({ error: "BAD_REQUEST" }, { status: 400 });
         }
 
-        const context: ChatMessage[] = await contextService(chatId, threadId, question);
-        
-        const answer = await dispatcher(context, model)
-        await contextService(chatId, threadId, question);
+        const answer = await contextService(chatId, threadId, question, model);        
 
         const data: AnswerCreateData = {
             content: answer,

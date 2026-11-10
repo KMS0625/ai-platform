@@ -1,3 +1,4 @@
+"use client"
 import Modal from "@/components/modal/Modal";
 import styles from "./pageCard.module.css";
 //type

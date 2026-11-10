@@ -71,6 +71,8 @@ export function usePromptWorkspace(workspaceList: ReturnType<typeof useWorkspace
                 if (!cancelled) setPrompt(result);
             } catch (error) {
                 console.error("프롬프트 조회 실패:", error);
+                alert(`${params.workspaceId} 잘못된 접근`);
+                router.push(sectionPath("prompt"))
             } finally {
                 if (!cancelled) setPromptLoading(false);
             }

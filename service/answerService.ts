@@ -23,6 +23,7 @@ export const answerService = {
             }
         })
     },
+    // 가장 최신 메시지부터 가져오기
     getMessagesByThreadId(threadId: string) {
         return prisma.answer.findMany({
             where: {threadId},
