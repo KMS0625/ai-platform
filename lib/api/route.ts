@@ -6,6 +6,7 @@ const threadDetail = (chatId: string, threadId: string) =>
 const noteDetail = (noteId: string) => `${BASE}/notes/${encodeURIComponent(noteId)}`;
 
 export const API = {
+    similarity: "/api/similarity",
     chat: {
         list: `${BASE}/chats`,
         detail: chatDetail,

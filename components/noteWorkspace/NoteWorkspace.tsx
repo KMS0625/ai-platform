@@ -27,7 +27,7 @@ function NoteWorkSpace({
 
     return (
         <div className={styles.container}>
-
+            <section className={styles.header}>hedaerekd</section>
             <section className={styles.app}>
                 {pages.map((pageCard) => (
                     <PageCard key={pageCard.id}

@@ -131,6 +131,25 @@
     cursor: pointer;
 }
 
+.answerButton {
+  border: 1px solid transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  user-select: text;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.answerButton:hover {
+  border-color: #aeb5c0;
+  background: #c9cdd3;
+}
+
+.answerButton:focus-visible {
+  outline: 2px solid #4c8dff;
+  outline-offset: 2px;
+}
+
 .closeButton:hover {
     background: #f5f5f5;
 }

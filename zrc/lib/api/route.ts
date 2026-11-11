@@ -19,22 +19,3 @@ export const API = {
     // const qs = sp.toString()
     // return qs ? `${CHATS}?${qs}` : CHATS
 } as const
-
-
-
-// import { useInfiniteQuery } from "@tanstack/react-query"
-// import { API } from "@/lib/api"
-// import type { ChatListResponseDto } from "@/lib/schema/chat"
-
-// export function useChatList() {
-//     return useInfiniteQuery({
-//         queryKey: ["chats"],
-//         initialPageParam: null as string | null,
-//         queryFn: async ({ pageParam }) => {
-//             const res = await fetch(API.chats.list({ cursor: pageParam }))
-//             if (!res.ok) throw new Error("failed to load chats")
-//             return (await res.json()) as ChatListResponseDto
-//         },
-//         getNextPageParam: (last) => last.nextCursor,
-//     })
-// }

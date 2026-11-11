@@ -22,6 +22,8 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
+문장 유사도 Python 서버 실행 및 Next.js 연동 방법은 [python/README.md](python/README.md)를 참고하세요.
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.

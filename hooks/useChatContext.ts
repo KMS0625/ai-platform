@@ -8,6 +8,7 @@ const EMPTY: ChatContext = { noteId: null, promptId: null };
 export function useChatContext(workspaceId?: string) {
     const [context, setContext] = useState<ChatContext>(EMPTY);
     const [isLoading, setLoading] = useState(true);
+    const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string>();
 
     useEffect(() => {
         if (!workspaceId) {
@@ -29,6 +30,7 @@ export function useChatContext(workspaceId?: string) {
                     noteId: workspace.noteId ?? null,
                     promptId: workspace.promptId ?? null,
                 });
+                setLoadedWorkspaceId(workspaceId);
             } catch (error) {
                 console.error("채팅 맥락 조회 실패:", error);
             } finally {
@@ -53,5 +55,9 @@ export function useChatContext(workspaceId?: string) {
         [workspaceId]
     );
 
-    return { context, isLoading, saveContext };
+    return {
+        context: workspaceId && loadedWorkspaceId === workspaceId ? context : EMPTY,
+        isLoading: Boolean(workspaceId) && (isLoading || loadedWorkspaceId !== workspaceId),
+        saveContext,
+    };
 }

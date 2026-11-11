@@ -11,17 +11,18 @@ export const CreatePageSchema = z.object({
 export const UpdatePageSchema = CreatePageSchema.extend({ order: z.number().int().optional() });
 export type CreatePageDto = z.infer<typeof CreatePageSchema>;
 export type UpdatePageDto = z.infer<typeof UpdatePageSchema>;
-export type PageResponseDto = {
-    id: string;
-    noteId: string;
-    title: string;
-    enabled: boolean;
-    keywords: string[];
-    priority: number;
-    importance: number;
-    content: string;
-    order: number;
-    createdAt: string;
-};
+export const PageResponseSchema = z.object({
+    id: z.uuid(),
+    noteId: z.uuid(),
+    title: z.string(),
+    enabled: z.boolean(),
+    keywords: z.array(z.string()),
+    priority: z.number().int(),
+    importance: z.number().int(),
+    content: z.string(),
+    order: z.number().int(),
+    createdAt: z.iso.datetime({ offset: true }),
+});
+export type PageResponseDto = z.infer<typeof PageResponseSchema>;
 export type PageListResponseDto = PageResponseDto[];
 export type MatchedPageDto = Pick<PageResponseDto, "content" | "priority" | "importance">;
