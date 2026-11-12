@@ -1,11 +1,29 @@
-# 문장 유사도 서버
+# AI 서버: 문장 유사도와 키워드 추출
+
+키워드는 브라우저 → `POST /api/keywords` (Next.js) → `POST /keywords` (FastAPI) 순서로 추출합니다. 기존 Python 패키지 이름 `ai_server`를 그대로 사용합니다.
+
+```ts
+import { keywordApi } from "@/api/keywords/keywordApi";
+
+const { items } = await keywordApi.extract({
+    source: "자연어 처리 모델은 문서에서 키워드를 추출한다.",
+    top_k: 10,
+});
+// items: [{ keyword, textrank, semantic, score }, ...]
+```
+
+`source`는 최대 20,000자, `top_k`는 1~100의 정수이며 생략하면 5입니다. 공백뿐인 입력이나 명사 후보가 없는 입력은 빈 items를 반환합니다. Kiwi가 명사 및 영어 후보를 추출하고 TextRank와 다국어 MiniLM 유사도를 각각 최대값으로 정규화합니다. 음수 유사도는 0으로 처리하며 기존 스크립트와 동일하게 **기하평균 `sqrt(textrank * semantic)`** 으로 점수를 계산해 내림차순으로 반환합니다. 모든 점수는 0~1입니다. 산술기하평균의 반복 계산은 사용하지 않습니다.
+
+키워드 모델은 기존 유사도 API의 캐시된 MiniLM 모델을 재사용하고 Kiwi는 최초 키워드 요청 시 로드됩니다. 최초 요청에는 추가 로딩 시간이 필요할 수 있습니다. 필요한 패키지는 아래 requirements 설치 명령으로 설치합니다.
+
+다른 Python 서버 주소는 Next.js의 `.env.local`에 `KEYWORD_API_URL=http://127.0.0.1:8000/keywords`로 설정합니다. 브라우저에는 이 환경변수가 노출되지 않습니다. Next.js는 잘못된 입력에 400, Python의 비정상 응답에 502, 연결 실패에 503, 30초 시간 초과에 504를 반환합니다. 요청 취소도 Python HTTP 요청에 전달됩니다.
 
 Python 3.10 이상이 필요합니다. 아래 명령은 저장소 루트의 PowerShell 기준입니다.
 
 ```powershell
 py -m venv python/.venv
 ./python/.venv/Scripts/python.exe -m pip install -r python/requirements-dev.txt
-./python/.venv/Scripts/python.exe -m uvicorn similarity_server.main:app --app-dir python --host 127.0.0.1 --port 8000
+./python/.venv/Scripts/python.exe -m uvicorn ai_server.main:app --app-dir python --host 127.0.0.1 --port 8000
 ```
 
 처음 시작할 때 `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` 모델을 다운로드합니다. 모델 로드가 끝나야 서버가 요청을 받습니다. FastAPI lifespan에서 프로세스당 모델을 한 번 로드합니다. 여러 worker를 사용하면 worker마다 별도로 모델을 로드합니다.
@@ -58,22 +76,16 @@ Next.js 오류 응답:
 | 503 | SIMILARITY_UNAVAILABLE | Python 서버 연결 실패 |
 | 504 | SIMILARITY_TIMEOUT | Python 요청 30초 초과 |
 
-테스트는 모델 대신 가짜 임베딩을 주입하므로 모델 다운로드가 필요하지 않습니다.
 
-```powershell
-$env:PYTHONPATH = "python"
-./python/.venv/Scripts/python.exe -m unittest discover -s python/tests -v
-node --test tests/api-http.test.mjs
-```
 
 구조:
 
-- `similarity_server/schemas.py`: Pydantic 요청·응답 DTO
-- `similarity_server/model.py`: SentenceTransformer 생성
-- `similarity_server/config.py`: DB 환경설정
-- `similarity_server/repository.py`: noteId로 페이지 조회
-- `similarity_server/service.py`: 유사도 계산
-- `similarity_server/routes.py`: FastAPI 라우트
-- `similarity_server/main.py`: 앱 구성과 모델 수명주기
+- `ai_server/schemas.py`: Pydantic 요청·응답 DTO
+- `ai_server/model.py`: SentenceTransformer 생성
+- `ai_server/config.py`: DB 환경설정
+- `ai_server/repository.py`: noteId로 페이지 조회
+- `ai_server/service.py`: 유사도 계산
+- `ai_server/routes.py`: FastAPI 라우트
+- `ai_server/main.py`: 앱 구성과 모델 수명주기
 
 참고: [FastAPI lifespan](https://fastapi.tiangolo.com/advanced/events/), [SentenceTransformer encode](https://www.sbert.net/docs/package_reference/sentence_transformer/model.html).

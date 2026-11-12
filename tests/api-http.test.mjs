@@ -9,6 +9,34 @@ import { z } from "zod";
 
 const require = createRequire(import.meta.url);
 
+test("keyword proxy validates input, forwards parameters and checks upstream responses", async () => {
+    const schemas = load("zrc/lib/schemas/keyword.ts");
+    let sent;
+    let response = Response.json({ items: [{ keyword: "AI", textrank: 1, semantic: 1, score: 1 }] });
+    const { keywordService, KeywordServiceError } = load("service/keywordService.ts", {
+        "server-only": {}, "@/zrc/lib/schemas/keyword": schemas,
+    }, {
+        AbortSignal, process: { env: {} },
+        fetch: async (url, init) => { sent = { url, init }; return response; },
+    });
+    const result = await keywordService.extract({ source: "AI 모델", top_k: 5 });
+    assert.equal(result.items[0].keyword, "AI");
+    assert.equal(sent.url, "http://127.0.0.1:8000/keywords");
+    assert.deepEqual(JSON.parse(sent.init.body), { source: "AI 모델", top_k: 5 });
+    const manyItems = Array.from({ length: 12 }, (_, i) => ({ keyword: `word${i}`, textrank: 1, semantic: 1, score: 1 }));
+    response = Response.json({ items: manyItems });
+    assert.equal((await keywordService.extract({ source: "s" })).items.length, 5);
+    assert.equal(JSON.parse(sent.init.body).top_k, 5);
+    response = Response.json({ items: manyItems });
+    assert.equal((await keywordService.extract({ source: "s", top_k: 2 })).items.length, 2);
+    await assert.rejects(keywordService.extract({ source: "s", top_k: 0 }));
+    response = Response.json({ items: [{ keyword: "x", score: 2 }] });
+    await assert.rejects(keywordService.extract({ source: "s" }), e =>
+        e instanceof KeywordServiceError && e.code === "INVALID_KEYWORD_RESPONSE");
+    response = new Response(null, { status: 500 });
+    await assert.rejects(keywordService.extract({ source: "s" }), e => e.status === 502);
+});
+
 function load(path, imports = {}, globals = {}) {
     const exports = {};
     const source = readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -483,7 +511,7 @@ test("chat page creation saves the complete draft to the connected note and prop
 
 test("answer modal always renders three slots and labels every missing page", () => {
     const { default: AnswerPageHelper } = load("components/modal/AnswerPageHelper/AnswerPageHelper.tsx", {
-        react: { useState: value => [value, () => {}], useRef: current => ({ current }), useId: () => "modal" },
+        react: { useEffect() {}, useState: value => [value, () => {}], useRef: current => ({ current }), useId: () => "modal" },
         "@/utils/parseKeywords": { parseKeywords: () => [] },
         "@/components/noteWorkspace/Page/pageCard.module.css": { default: {} },
         "./answerPageHelper.module.css": { default: {} },

@@ -116,6 +116,28 @@
   overflow-x: auto;
 }
 
+.generateButton {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #31519c;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #31519c;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.generateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.keywordError {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.8rem;
+}
+
 /* 본문 영역 */
 .contentSection {
   display: flex;

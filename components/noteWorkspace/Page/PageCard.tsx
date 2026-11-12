@@ -6,8 +6,9 @@ import type { Page } from "@/models/Page";
 
 //util
 import { parseKeywords, ArrayToString } from "@/utils/parseKeywords";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DeleteHelper from "@/components/modal/deleteHelper/DeleteHelper";
+import { keywordApi } from "@/api/keywords/keywordApi";
 
 type PageCardProps = {
     pageView: Page;
@@ -21,6 +22,37 @@ function PageCard({
   	onRemove,
 }: PageCardProps) {
   	const [ isDeleteOpen, setDeleteOpen] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [keywordError, setKeywordError] = useState("");
+    const keywordInput = useRef<HTMLInputElement>(null);
+    const keywordRequest = useRef<AbortController | null>(null);
+
+    useEffect(() => () => { keywordRequest.current?.abort(); }, []);
+
+    const generateKeywords = async () => {
+        if (!pageView.content.trim() || keywordRequest.current) return;
+
+        const controller = new AbortController();
+        keywordRequest.current = controller;
+        setIsGenerating(true);
+        setKeywordError("");
+        try {
+            const { items } = await keywordApi.extract({ source: pageView.content }, controller.signal);
+            if (controller.signal.aborted) return;
+            const keywords = items.map(item => item.keyword);
+            if (keywordInput.current) keywordInput.current.value = ArrayToString(keywords);
+            onChange(pageView.id, { keywords });
+        } catch {
+            if (!controller.signal.aborted) {
+                setKeywordError("키워드 자동 생성에 실패했습니다. 다시 시도해 주세요.");
+            }
+        } finally {
+            if (!controller.signal.aborted) {
+                keywordRequest.current = null;
+                setIsGenerating(false);
+            }
+        }
+    };
 
 	const handleSubmit = () => {
 		onRemove(pageView.id);
@@ -58,17 +90,30 @@ function PageCard({
       	</div>
 
         <section className={styles.keywordSection}>
+            <div className={styles.sectionHeader}>
         	<label className={styles.sectionTitle}>
           		키워드
         	</label>
+                <button
+                    type="button"
+                    className={styles.generateButton}
+                    onClick={generateKeywords}
+                    disabled={!pageView.content.trim() || isGenerating}
+                >
+                    {isGenerating ? "생성 중..." : "키워드 자동 생성"}
+                </button>
+            </div>
 
 			<input
 			type="text"
+			ref={keywordInput}
+			disabled={isGenerating}
 			className={styles.keywordInput}
 			placeholder="키워드를 쉼표(,)로 구분하여 입력"
 			defaultValue={ArrayToString(pageView.keywords)}
 			onChange={(e) => onChange(pageView.id, { keywords: parseKeywords(e.target.value) })}
 			/>
+            {keywordError && <p className={styles.keywordError} role="alert">{keywordError}</p>}
 		</section>
 
       	<div className={styles.metaRow}>
@@ -103,6 +148,7 @@ function PageCard({
         		<span className={styles.sectionHint}>{hintValue}</span>
     		</div>
 			<textarea
+			disabled={isGenerating}
 			className={styles.contentInput}
 			placeholder="페이지 내용을 입력하세요."
 			defaultValue={pageView.content}

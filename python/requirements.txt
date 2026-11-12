@@ -5,3 +5,5 @@ sentence-transformers>=3,<6
 numpy>=2,<3
 psycopg[binary]>=3.2,<4
 python-dotenv>=1,<2
+networkx>=3,<4
+kiwipiepy>=0.20,<1

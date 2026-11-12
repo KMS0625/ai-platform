@@ -106,7 +106,7 @@ class SimilarityTests(unittest.TestCase):
         self.assertEqual(len(model.calls), 2)
         self.assertFalse(hasattr(app.state, "similarity_service"))
 
-    @patch("similarity_server.repository.psycopg.connect")
+    @patch("ai_server.repository.psycopg.connect")
     def test_repository_parameterizes_note_id_and_returns_page_metadata(self, connect):
         connection = connect.return_value.__enter__.return_value
         row = page(1, "content").model_dump()
@@ -119,7 +119,7 @@ class SimilarityTests(unittest.TestCase):
         self.assertEqual(pages[0].content, "content")
         connect.return_value.__exit__.assert_called_once()
 
-    @patch("similarity_server.repository.psycopg.connect")
+    @patch("ai_server.repository.psycopg.connect")
     def test_repository_handles_prisma_schema_url_option(self, connect):
         connection = connect.return_value.__enter__.return_value
         connection.execute.return_value.fetchall.return_value = []

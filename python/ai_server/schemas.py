@@ -38,3 +38,21 @@ class PageSimilarity(BaseModel):
 
 class SimilarityResponse(BaseModel):
     items: list[PageSimilarity]
+
+
+class KeywordRequest(BaseModel):
+    model_config = ConfigDict(strict=True)
+
+    source: str = Field(max_length=20000)
+    top_k: int = Field(default=5, ge=1, le=100)
+
+
+class KeywordScore(BaseModel):
+    keyword: str
+    textrank: float = Field(ge=0, le=1)
+    semantic: float = Field(ge=0, le=1)
+    score: float = Field(ge=0, le=1)
+
+
+class KeywordResponse(BaseModel):
+    items: list[KeywordScore]

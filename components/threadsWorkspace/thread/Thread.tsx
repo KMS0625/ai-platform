@@ -9,6 +9,7 @@ import AnswerPageHelper from "@/components/modal/AnswerPageHelper/AnswerPageHelp
 import type { Answer } from "@/models/Answer";
 import type { CreatePageDto } from "@/zrc/lib/schemas/page";
 import type { PageSimilarityDto } from "@/zrc/lib/schemas/similarity";
+import { keywordApi } from "@/api/keywords/keywordApi";
 
 type ThreadProps = {
     threadView: ThreadView;
@@ -45,6 +46,11 @@ function Thread({ threadView }: ThreadProps)  {
 
     const handleCreatePage = async (draft: CreatePageDto) => {
         await makePage(draft);
+    };
+
+    const handleGenerateKeywords = async (source: string, signal: AbortSignal) => {
+        const { items } = await keywordApi.extract({ source }, signal);
+        return items.map(item => item.keyword);
     };
 
     useEffect(() => {
@@ -180,6 +186,7 @@ function Thread({ threadView }: ThreadProps)  {
                     pagesLoading={pagesLoading}
                     pagesError={pagesError}
                     onClose={closeAnswerModal} 
+                    onGenerateKeywords={handleGenerateKeywords}
                     disabledReason={context.noteId ? undefined : "채팅에 노트를 먼저 연결해 주세요."}
                     onSubmit={handleCreatePage} />
                 )}
